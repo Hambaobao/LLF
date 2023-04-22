@@ -1,0 +1,44 @@
+method: random
+metric:
+    name: loss
+    goal: minimize
+parameters:
+    task:
+        value: "dsc"
+    ntasks:
+        value: 3
+    num_labels:
+        value: 2
+    idrandom:
+        value: 0
+    train_data_size:
+        value: 0
+
+    # training config
+    seed:
+        value: 1024
+    train_epochs:
+        value: 2
+
+    # static
+    checkpoint_path:
+        value: "/data3/zl/lifelong/checkpoints/bert"
+    bert_model:
+        value: "zoo/bert/"
+    eval_batch_size:
+        value: 8
+    max_seq_length:
+        value: 128
+
+    # dynamic
+    learning_rate:
+        min: 0.0001
+        max: 0.1
+    optimizer:
+        values: ["adam", "sgd"]
+    train_batch_size:
+        values: [8, 16, 32]
+    bert_hidden_size:
+        value: 768
+    hidden_dropout_prob:
+        value: 0.1

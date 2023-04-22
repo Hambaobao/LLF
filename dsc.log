@@ -1,0 +1,68 @@
+Starting sweep agent: entity=None, project=None, count=3
+setting random seed to 1024
+start loading data ...
+random sequence: ['Tools_and_Home_Improvement', 'Pet_Supplies', 'Office_Products', 'Kindle_Store', 'Movies_and_TV', 'Video_Games', 'Musical_Instruments', 'Sports_and_Outdoors', 'Patio_Lawn_and_Garden', 'Toys_and_Games']
+processing dataset 1: Tools_and_Home_Improvement
+processing dataset 2: Pet_Supplies
+processing dataset 3: Office_Products
+end loading data
+building model and put it on GPUs
+start training ...
+training on dataset 0 ...
+saving model checkpoint of task: 0, epoch: 0
+saving model checkpoint of task: 0, epoch: 1
+validing after trained on dataset 0-0 ...
+
++--------+--------+--------+
+| task 0 | task 1 | task 2 |
++--------+--------+--------+
+| 50.00% | 0.00%  | 0.00%  |
++--------+--------+--------+
+evaluating after trained on dataset 0-0 ...
+
++--------+--------+--------+
+| task 0 | task 1 | task 2 |
++--------+--------+--------+
+| 50.00% | 0.00%  | 0.00%  |
++--------+--------+--------+
+training on dataset 1 ...
+saving model checkpoint of task: 1, epoch: 0
+saving model checkpoint of task: 1, epoch: 1
+validing after trained on dataset 0-1 ...
+
++--------+--------+--------+
+| task 0 | task 1 | task 2 |
++--------+--------+--------+
+| 50.00% | 0.00%  | 0.00%  |
+| 50.00% | 50.00% | 0.00%  |
++--------+--------+--------+
+evaluating after trained on dataset 0-1 ...
+
++--------+--------+--------+
+| task 0 | task 1 | task 2 |
++--------+--------+--------+
+| 50.00% | 0.00%  | 0.00%  |
+| 50.00% | 50.00% | 0.00%  |
++--------+--------+--------+
+training on dataset 2 ...
+saving model checkpoint of task: 2, epoch: 0
+saving model checkpoint of task: 2, epoch: 1
+validing after trained on dataset 0-2 ...
+
++--------+--------+--------+
+| task 0 | task 1 | task 2 |
++--------+--------+--------+
+| 50.00% | 0.00%  | 0.00%  |
+| 50.00% | 50.00% | 0.00%  |
+| 50.00% | 50.00% | 50.00% |
++--------+--------+--------+
+evaluating after trained on dataset 0-2 ...
+
++--------+--------+--------+
+| task 0 | task 1 | task 2 |
++--------+--------+--------+
+| 50.00% | 0.00%  | 0.00%  |
+| 50.00% | 50.00% | 0.00%  |
+| 50.00% | 50.00% | 50.00% |
++--------+--------+--------+
+end training
