@@ -3,8 +3,6 @@ metric:
     name: loss
     goal: minimize
 parameters:
-    task:
-        value: "dsc"
     ntasks:
         value: 3
     num_labels:
@@ -15,10 +13,8 @@ parameters:
         value: 0
 
     # training config
-    seed:
-        value: 1024
     train_epochs:
-        value: 2
+        value: 3
 
     # static
     checkpoint_path:
@@ -32,8 +28,8 @@ parameters:
 
     # dynamic
     learning_rate:
-        min: 0.0001
-        max: 0.1
+        min: 0.00001
+        max: 0.0001
     optimizer:
         values: ["adam", "sgd"]
     train_batch_size:

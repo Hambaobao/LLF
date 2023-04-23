@@ -166,7 +166,7 @@ class Master(object):
         self.logger.info('\n' + self.eval_recorder.records.get_string())
 
     def save_model(self, wandb, t, e):
-        checkpoint_path = Path(wandb.config.checkpoint_path)
+        checkpoint_path = Path(wandb.config.checkpoint_path) / Path(wandb.run.name)
 
         if not checkpoint_path.exists():
             checkpoint_path.mkdir(parents=True, exist_ok=True)
@@ -179,8 +179,8 @@ class Master(object):
 
         torch.save(self.model.state_dict(), checkpoint_path)
 
-    def load_model(self, path):
-        checkpoint_path = Path(path)
+    def load_model(self, path, name):
+        checkpoint_path = Path(path) / Path(name)
         if checkpoint_path.exists():
             self.init_t, self.init_e = self.check_history(checkpoint_path)
 
