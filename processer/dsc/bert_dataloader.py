@@ -36,7 +36,7 @@ def examples2data(config, examples, labels, tokenizer, t):
     return data
 
 
-def get(logger=None, config=None, f_name='./randoms/dsc_random_10'):
+def get(logger=None, config=None, f_name='randseqs/dsc_random_10'):
     data = {}
 
     with open(f_name, 'r') as f_random_seq:

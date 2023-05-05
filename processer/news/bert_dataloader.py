@@ -68,7 +68,7 @@ def get(logger, config):
 
     # Others
     f_name = dataset_name + '_random_' + str(config.ntasks)
-    with open("randoms/" + f_name, 'r') as f_random_seq:
+    with open("randseqs/" + f_name, 'r') as f_random_seq:
         random_seq = f_random_seq.readlines()[config.idrandom].split()
 
     logger.info('random sequence: {}'.format(str(random_seq)))

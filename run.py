@@ -4,9 +4,9 @@ from src.bert import Net
 
 import wandb
 
-logger = log.set_logger()
-
 args = configure.set_args()
+
+logger = log.set_logger(args)
 
 reproduce.set_seed(args.seed)
 logger.info('setting random seed to {}'.format(args.seed))

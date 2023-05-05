@@ -1,16 +1,18 @@
 import logging
+from pathlib import Path
 
 
-def set_logger():
+def set_logger(args):
     logFormatter = logging.basicConfig(format='%(asctime)s - %(levelname)s - %(name)s -   %(message)s', datefmt='%Y/%m/%d %H:%M:%S', level=logging.INFO)
     logger = logging.getLogger()
 
-    fileHandler = logging.FileHandler("logs/dsc.log", mode='w')
+    path = Path("logs")
+    if not path.exists():
+        path.mkdir(parents=True, exist_ok=True)
+    path /= Path(args.task + ".log")
+
+    fileHandler = logging.FileHandler(path, mode='w')
     fileHandler.setFormatter(logFormatter)
     logger.addHandler(fileHandler)
-
-    # consoleHandler = logging.StreamHandler()
-    # consoleHandler.setFormatter(logFormatter)
-    # logger.addHandler(consoleHandler)
 
     return logger
