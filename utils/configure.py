@@ -10,7 +10,7 @@ def random_name(k=6):
 
 
 def parse(parser):
-    parser.add_argument("--task", required=True, type=str, choices=['dsc', 'asc'], help="tasks")
+    parser.add_argument("--task", required=True, type=str, choices=['dsc', 'asc', 'news'], help="tasks")
     parser.add_argument("--seed", type=int, default=1024, help="random seed")
 
     parser.add_argument("--resume", default=False, action='store_true', help="whether resume from last train")

@@ -23,13 +23,13 @@ def create_dataloader(data, batch_size):
 
 
 def examples2data(config, examples, labels, tokenizer, t):
-    train_features = data_utils.convert_examples_to_features_dsc(examples, labels, config['max_seq_length'], tokenizer, "dsc")
+    features = data_utils.convert_examples_to_features_dsc(examples, labels, config['max_seq_length'], tokenizer, "dsc")
 
-    all_input_ids = torch.tensor([f.input_ids for f in train_features], dtype=torch.long)
-    all_segment_ids = torch.tensor([f.segment_ids for f in train_features], dtype=torch.long)
-    all_input_mask = torch.tensor([f.input_mask for f in train_features], dtype=torch.long)
-    all_label_ids = torch.tensor([f.label_id for f in train_features], dtype=torch.long)
-    all_tasks = torch.tensor([t for _ in train_features], dtype=torch.long)
+    all_input_ids = torch.tensor([f.input_ids for f in features], dtype=torch.long)
+    all_segment_ids = torch.tensor([f.segment_ids for f in features], dtype=torch.long)
+    all_input_mask = torch.tensor([f.input_mask for f in features], dtype=torch.long)
+    all_label_ids = torch.tensor([f.label_id for f in features], dtype=torch.long)
+    all_tasks = torch.tensor([t for _ in features], dtype=torch.long)
 
     data = TensorDataset(all_input_ids, all_segment_ids, all_input_mask, all_label_ids, all_tasks)
 

@@ -15,6 +15,8 @@ if args.task == 'dsc':
     from processer.dsc import bert_dataloader as dataloader
 elif args.task == 'asc':
     from processer.asc import bert_dataloader as dataloader
+elif args.task == 'news':
+    from processer.news import bert_dataloader as dataloader
 
 
 def main(config=None):
