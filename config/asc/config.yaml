@@ -1,6 +1,5 @@
-# dsc config
-ntasks: 3
-num_labels: 2
+# asc config
+ntasks: 19
 idrandom: 0
 train_data_size: 0
 
@@ -8,10 +7,12 @@ train_data_size: 0
 train_epochs: 2
 
 # static
-checkpoint_path: "/data3/zl/lifelong/checkpoints/dsc/bert"
+checkpoint_path: "/data3/zl/lifelong/checkpoints/asc/bert"
 bert_model: "zoo/bert/"
 eval_batch_size: 8
 max_seq_length: 128
+exp: ""
+max_term_length: 5
 
 # dynamic
 bert_hidden_size: 768

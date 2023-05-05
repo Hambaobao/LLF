@@ -9,9 +9,8 @@ def random_name(k=6):
     return ''.join(random.choices(string.ascii_uppercase + string.digits, k=k))
 
 
-def parse():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--task", type=str, default='dsc', help="tasks")
+def parse(parser):
+    parser.add_argument("--task", required=True, type=str, choices=['dsc', 'asc'], help="tasks")
     parser.add_argument("--seed", type=int, default=1024, help="random seed")
 
     parser.add_argument("--resume", default=False, action='store_true', help="whether resume from last train")
@@ -20,6 +19,12 @@ def parse():
     parser.add_argument("--sweep", default=False, action='store_true', help="whether to use wandb sweep")
     parser.add_argument("--count", type=int, default=0, help="count of sweep")
 
+    return parser
+
+
+def set_args():
+    parser = argparse.ArgumentParser()
+    parser = parse(parser)
     args = parser.parse_args()
 
     return args

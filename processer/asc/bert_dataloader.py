@@ -1,17 +1,38 @@
+#Coding: UTF-8
 import math
-import random
-
 import torch
+from transformers import BertTokenizer as BertTokenizer
 from torch.utils.data import TensorDataset, RandomSampler, DataLoader
-
-from transformers import BertTokenizer
 
 import utils.nlp_data_utils as data_utils
 from utils.nlp_data_utils import ABSATokenizer
 
-domains = ['Video_Games', 'Toys_and_Games', 'Tools_and_Home_Improvement', 'Sports_and_Outdoors', 'Pet_Supplies', 'Patio_Lawn_and_Garden', 'Office_Products', 'Musical_Instruments', 'Movies_and_TV', 'Kindle_Store']
+datasets = [
+    '/data3/zl/lifelong/dat/absa/XuSemEval/asc/14/rest',
+    '/data3/zl/lifelong/dat/absa/XuSemEval/asc/14/laptop',
+    '/data3/zl/lifelong/dat/absa/Bing3Domains/asc/Speaker',
+    '/data3/zl/lifelong/dat/absa/Bing3Domains/asc/Router',
+    '/data3/zl/lifelong/dat/absa/Bing3Domains/asc/Computer',
+    '/data3/zl/lifelong/dat/absa/Bing5Domains/asc/Nokia6610',
+    '/data3/zl/lifelong/dat/absa/Bing5Domains/asc/NikonCoolpix4300',
+    '/data3/zl/lifelong/dat/absa/Bing5Domains/asc/CreativeLabsNomadJukeboxZenXtra40GB',
+    '/data3/zl/lifelong/dat/absa/Bing5Domains/asc/CanonG3',
+    '/data3/zl/lifelong/dat/absa/Bing5Domains/asc/ApexAD2600Progressive',
+    '/data3/zl/lifelong/dat/absa/Bing9Domains/asc/CanonPowerShotSD500',
+    '/data3/zl/lifelong/dat/absa/Bing9Domains/asc/CanonS100',
+    '/data3/zl/lifelong/dat/absa/Bing9Domains/asc/DiaperChamp',
+    '/data3/zl/lifelong/dat/absa/Bing9Domains/asc/HitachiRouter',
+    '/data3/zl/lifelong/dat/absa/Bing9Domains/asc/ipod',
+    '/data3/zl/lifelong/dat/absa/Bing9Domains/asc/LinksysRouter',
+    '/data3/zl/lifelong/dat/absa/Bing9Domains/asc/MicroMP3',
+    '/data3/zl/lifelong/dat/absa/Bing9Domains/asc/Nokia6600',
+    '/data3/zl/lifelong/dat/absa/Bing9Domains/asc/Norton',
+]
 
-datasets = ['/data3/zl/lifelong/dat/dsc/' + domain for domain in domains]
+domains = [
+    'XuSemEval14_rest', 'XuSemEval14_laptop', 'Bing3domains_Speaker', 'Bing3domains_Router', 'Bing3domains_Computer', 'Bing5domains_Nokia6610', 'Bing5domains_NikonCoolpix4300', 'Bing5domains_CreativeLabsNomadJukeboxZenXtra40GB', 'Bing5domains_CanonG3', 'Bing5domains_ApexAD2600Progressive', 'Bing9domains_CanonPowerShotSD500', 'Bing9domains_CanonS100', 'Bing9domains_DiaperChamp', 'Bing9domains_HitachiRouter', 'Bing9domains_ipod', 'Bing9domains_LinksysRouter', 'Bing9domains_MicroMP3',
+    'Bing9domains_Nokia6600', 'Bing9domains_Norton'
+]
 
 
 def create_dataloader(data, batch_size):
@@ -23,7 +44,7 @@ def create_dataloader(data, batch_size):
 
 
 def examples2data(config, examples, labels, tokenizer, t):
-    train_features = data_utils.convert_examples_to_features_dsc(examples, labels, config['max_seq_length'], tokenizer, "dsc")
+    train_features = data_utils.convert_examples_to_features(config, examples, labels, config['max_seq_length'], tokenizer, "dsc")
 
     all_input_ids = torch.tensor([f.input_ids for f in train_features], dtype=torch.long)
     all_segment_ids = torch.tensor([f.segment_ids for f in train_features], dtype=torch.long)
@@ -36,7 +57,7 @@ def examples2data(config, examples, labels, tokenizer, t):
     return data
 
 
-def get(logger=None, config=None, f_name='./randoms/dsc_random_10'):
+def get(logger=None, config=None, f_name='./randoms/asc_random'):
     data = {}
 
     with open(f_name, 'r') as f_random_seq:
@@ -50,19 +71,19 @@ def get(logger=None, config=None, f_name='./randoms/dsc_random_10'):
         dataset = datasets[domains.index(random_seq[t])]
 
         data[t] = {}
-        data[t]['name'] = dataset
 
         logger.info('processing dataset {}: '.format(t + 1) + random_seq[t])
 
-        processor = data_utils.DscProcessor()
-        label_list = processor.get_labels()
+        if 'Bing' in dataset:
+            data[t]['ncla'] = 2
+        elif 'XuSemEval' in dataset:
+            data[t]['name'] = dataset
+            data[t]['ncla'] = 3
 
+        processor = data_utils.AscProcessor()
+        label_list = processor.get_labels()
         tokenizer = ABSATokenizer.from_pretrained(config.bert_model)
         train_examples = processor.get_train_examples(dataset)
-
-        if config.train_data_size > 0:  #TODO: for replicated results, better do outside (in prep_dsc.py), so that can save as a file
-            random.Random(config.data_seed).shuffle(train_examples)  #more robust
-            train_examples = train_examples[:config.train_data_size]
 
         num_train_steps = int(math.ceil(len(train_examples) / config.train_batch_size)) * config.train_epochs
 

@@ -1,9 +1,20 @@
-from processer.dsc import bert_dataloader as dataloader
 from utils import configure, log, reproduce
 from src.master import Master
 from src.bert import Net
 
 import wandb
+
+logger = log.set_logger()
+
+args = configure.set_args()
+
+reproduce.set_seed(args.seed)
+logger.info('setting random seed to {}'.format(args.seed))
+
+if args.task == 'dsc':
+    from processer.dsc import bert_dataloader as dataloader
+elif args.task == 'asc':
+    from processer.asc import bert_dataloader as dataloader
 
 
 def main(config=None):
@@ -34,14 +45,6 @@ def main(config=None):
 
 
 if __name__ == "__main__":
-
-    logger = log.set_logger()
-
-    args = configure.parse()
-
-    logger.info('setting random seed to {}'.format(args.seed))
-    reproduce.set_seed(args.seed)
-
     if args.sweep:
         sweep_id = configure.wandb_sweep(args)
         wandb.agent(sweep_id=sweep_id, function=main, count=args.count)
