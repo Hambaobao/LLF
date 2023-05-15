@@ -3,7 +3,7 @@ from utils.reproduce import set_seed
 from utils.log import set_logger
 from utils.dataload import get_dataloader
 from src.master import Master
-from src.model import Net
+from src.bert import Net
 
 import wandb
 
