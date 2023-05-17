@@ -46,11 +46,10 @@ class LIF(nn.Module):
 
     def __init__(self, config):
         super(LIF, self).__init__()
-        self.num_neurons = config.num_neurons
         self.hidden_size = config.hidden_size
         self.max_seq_length = config.max_seq_length
         self.threshes = torch.rand(config.num_neurons).cuda()
-        self.accumulations = torch.zeros(config.train_batch_size, config.num_neurons).cuda()
+        self.accumulations = torch.zeros(config.num_neurons).cuda()
 
         self.dropout = nn.Dropout(p=config.dropout_probability)
 
@@ -64,21 +63,25 @@ class LIF(nn.Module):
             _outputs = []
             _spikes = []
             for j in range(self.hidden_size):
-                self.accumulations += inputs[:, i, j].unsqueeze(dim=1)
+                _input = inputs[:, i, j]
+
+                accumulations = self.accumulations + _input.unsqueeze(dim=1)
 
                 # do dropout
-                self.accumulations = self.dropout(self.accumulations)
+                accumulations = self.dropout(accumulations)
 
                 # spikes occur when accumulations great than thresh
                 # batch_size, num_neurons
-                spike = self.accumulations.gt(self.threshes)
+                spike = accumulations.gt(self.threshes)
 
                 # treat accumulations as amplitude
                 # batch_size, num_neurons
-                output = spike * self.accumulations
+                output = spike * accumulations
 
                 # reset to 0 after spike
-                self.accumulations -= output
+                accumulations -= output
+
+                self.accumulations = activation(torch.sum(accumulations, dim=0))
 
                 _outputs.append(output)
                 _spikes.append(spike)

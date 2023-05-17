@@ -5,6 +5,8 @@ from utils.dataload import get_dataloader
 from src.master import Master
 from src.model import Net
 
+import torch.nn as nn
+
 import wandb
 
 args = set_args()
@@ -31,6 +33,7 @@ def main(config=None):
 
         logger.info('building model and put it on GPUs')
         net = Net(wandb.config).cuda()
+        # net = nn.DataParallel(net, device_ids=[0, 1], output_device=0)
         master = Master(wandb.config, logger, net)
 
         if args.resume:
