@@ -86,11 +86,12 @@ class Master(object):
 
                     logits = outputs[0]
 
-                    loss = calculate_loss(logits, targets)
+                    # loss = calculate_loss(logits, targets)
 
                     optimizer.zero_grad()
 
-                    loss.backward()
+                    # loss.backward()
+                    loss = torch.tensor(0.)
 
                     optimizer.step()
                     scheduler.step()

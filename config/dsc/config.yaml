@@ -11,12 +11,12 @@ train_epochs: 2
 checkpoint_path: "/data3/zl/lifelong/checkpoints/dsc/bert"
 bert_model: "zoo/bert/"
 eval_batch_size: 8
-max_seq_length: 128
+max_seq_length: 256
 
 # dynamic
-num_neurons: 2
-hidden_size: 512
+hidden_size: 256
+num_neurons: 1024
 bert_hidden_size: 768
-hidden_dropout_prob: 0.1
-train_batch_size: 32
+train_batch_size: 16
 learning_rate: 1e-5
+dropout_probability: 0.5

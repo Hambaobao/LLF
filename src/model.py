@@ -18,7 +18,6 @@ class Pooler(nn.Module):
         self.activation = nn.Tanh()
 
     def forward(self, inputs):
-        # We "pool" the model by simply taking the hidden state corresponding to the first token.
         # inputs shape: bath_size, max_seq_length, hidden_size
         # outputs shape: bath_size, max_seq_length
         pooled_output = self.dense(inputs).squeeze(2)
@@ -51,7 +50,9 @@ class LIF(nn.Module):
         self.hidden_size = config.hidden_size
         self.max_seq_length = config.max_seq_length
         self.threshes = torch.rand(config.num_neurons).cuda()
-        self.accumulations = None
+        self.accumulations = torch.zeros(config.train_batch_size, config.num_neurons).cuda()
+
+        self.dropout = nn.Dropout(p=config.dropout_probability)
 
     def forward(self, inputs):
         outputs = []
@@ -63,35 +64,24 @@ class LIF(nn.Module):
             _outputs = []
             _spikes = []
             for j in range(self.hidden_size):
-                __outputs = []
-                __spikes = []
-                for k in range(self.num_neurons):
-                    if self.accumulations is None:
-                        self.accumulations = inputs[:, i, j]
-                    else:
-                        # batch_size, 1
-                        self.accumulations += inputs[:, i, j]
+                self.accumulations += inputs[:, i, j].unsqueeze(dim=1)
 
-                    # spikes occur when accumulations great than thresh
-                    # batch_size, 1
-                    spike = self.accumulations.gt(self.threshes[k])
+                # do dropout
+                self.accumulations = self.dropout(self.accumulations)
 
-                    # treat accumulations as amplitude
-                    # batch_size, 1
-                    output = spike * self.accumulations
+                # spikes occur when accumulations great than thresh
+                # batch_size, num_neurons
+                spike = self.accumulations.gt(self.threshes)
 
-                    # reset to 0 after spike
-                    self.accumulations -= output
+                # treat accumulations as amplitude
+                # batch_size, num_neurons
+                output = spike * self.accumulations
 
-                    __outputs.append(output)
-                    __spikes.append(spike)
+                # reset to 0 after spike
+                self.accumulations -= output
 
-                # bath_size, num_neurons
-                __outputs = torch.stack([o for o in __outputs], dim=1)
-                __spikes = torch.stack([s for s in __spikes], dim=1)
-
-                _outputs.append(__outputs)
-                _spikes.append(__spikes)
+                _outputs.append(output)
+                _spikes.append(spike)
 
             # bath_size, num_neurons, hidden_size
             _outputs = torch.stack([o for o in _outputs], dim=2)
@@ -171,8 +161,8 @@ class Net(nn.Module):
             # sum of last three layer
             snn_inputs = torch.stack(hidden_states[-3:]).sum(0)
 
-        snn_outputs, hidden_spikes = self.snn(snn_inputs)
+            snn_outputs, hidden_spikes = self.snn(snn_inputs)
 
-        logits = self.classifier(snn_outputs)
+            logits = self.classifier(snn_outputs)
 
         return logits, hidden_spikes
