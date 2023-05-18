@@ -88,13 +88,13 @@ class Master(object):
 
                     # loss = calculate_loss(logits, targets)
 
-                    optimizer.zero_grad()
+                    # optimizer.zero_grad()
 
                     # loss.backward()
                     loss = torch.tensor(0.)
 
-                    optimizer.step()
-                    scheduler.step()
+                    # optimizer.step()
+                    # scheduler.step()
 
                     trainer.update(logits, targets)
 

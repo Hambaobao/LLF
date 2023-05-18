@@ -14,9 +14,9 @@ eval_batch_size: 8
 max_seq_length: 256
 
 # dynamic
-hidden_size: 256
-num_neurons: 1024
+hidden_size: 128
+num_neurons: 128
 bert_hidden_size: 768
 train_batch_size: 16
-learning_rate: 1e-5
+learning_rate: 0.00001
 dropout_probability: 0.5

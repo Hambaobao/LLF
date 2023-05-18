@@ -1,13 +1,7 @@
 import torch
 import torch.nn as nn
-
+import torch.optim as optim
 from transformers import BertModel, BertConfig
-
-
-def activation(inputs):
-    outputs = inputs
-
-    return outputs
 
 
 class Pooler(nn.Module):
@@ -48,15 +42,30 @@ class LIF(nn.Module):
         super(LIF, self).__init__()
         self.hidden_size = config.hidden_size
         self.max_seq_length = config.max_seq_length
-        self.threshes = torch.rand(config.num_neurons).cuda()
-        self.accumulations = torch.zeros(config.num_neurons).cuda()
+        self.accumulations = torch.zeros(config.num_neurons)
+        self.threshes = nn.Parameter(torch.rand(config.num_neurons))
 
-        self.dropout = nn.Dropout(p=config.dropout_probability)
+    def get_goodness(self, inputs):
+        # inputs: bath_size, max_seq_length, num_neurons, hidden_size
+        # output: 1
+        norm = torch.norm(inputs, dim=2) / inputs.shape[2]
+        goodness = torch.sum(norm) / (inputs.shape[0] * inputs.shape[1] * inputs.shape[3])
 
-    def forward(self, inputs):
+        return goodness
+
+    def activation(self, inputs):
+        outputs = torch.sigmoid(inputs)
+
+        return outputs
+
+    def forward(self, inputs, data_type):
+        inputs = inputs.detach()
+        inputs.requires_grad = True
+
         outputs = []
         spikes = []
-        inputs = activation(inputs)
+
+        inputs = self.activation(inputs)
 
         # word by word processing
         for i in range(self.max_seq_length):
@@ -65,10 +74,10 @@ class LIF(nn.Module):
             for j in range(self.hidden_size):
                 _input = inputs[:, i, j]
 
-                accumulations = self.accumulations + _input.unsqueeze(dim=1)
+                self.accumulations = self.accumulations.detach()
+                self.accumulations.requires_grad = True
 
-                # do dropout
-                accumulations = self.dropout(accumulations)
+                accumulations = self.accumulations.to(_input.device) + _input.unsqueeze(dim=1)
 
                 # spikes occur when accumulations great than thresh
                 # batch_size, num_neurons
@@ -81,7 +90,7 @@ class LIF(nn.Module):
                 # reset to 0 after spike
                 accumulations -= output
 
-                self.accumulations = activation(torch.sum(accumulations, dim=0))
+                self.accumulations = torch.max(accumulations, dim=0)[0]
 
                 _outputs.append(output)
                 _spikes.append(spike)
@@ -98,9 +107,18 @@ class LIF(nn.Module):
         spikes = torch.stack([s for s in spikes], dim=1)
 
         # limit amplitude of outputs
-        outputs = activation(outputs)
+        outputs = self.activation(outputs)
 
-        return outputs, spikes
+        goodness = self.get_goodness(outputs)
+
+        if data_type == 'positive':
+            loss = -goodness
+        elif data_type == 'negative':
+            loss = goodness
+        else:
+            print('data type error')
+
+        return outputs, spikes, loss
 
 
 class SNN(nn.Module):
@@ -110,33 +128,54 @@ class SNN(nn.Module):
         self.linear1 = nn.Linear(config.bert_hidden_size, config.hidden_size)
         self.lif1 = LIF(config)
         self.integrator1 = Integrator(config)
+        self.dropout1 = nn.Dropout(p=config.dropout_probability)
+        self.params1 = list(self.linear1.parameters()) + list(self.lif1.parameters())
+        self.optimizer1 = optim.SGD(self.params1, lr=config.learning_rate)
 
         self.linear2 = nn.Linear(config.hidden_size, config.hidden_size)
         self.lif2 = LIF(config)
         self.integrator2 = Integrator(config)
+        self.dropout2 = nn.Dropout(p=config.dropout_probability)
+        self.params2 = list(self.linear1.parameters()) + list(self.lif1.parameters())
+        self.optimizer2 = optim.SGD(self.params2, lr=config.learning_rate)
 
         self.linear3 = nn.Linear(config.hidden_size, config.hidden_size)
         self.lif3 = LIF(config)
         self.integrator3 = Integrator(config)
+        self.dropout3 = nn.Dropout(p=config.dropout_probability)
+        self.params3 = list(self.linear1.parameters()) + list(self.lif1.parameters())
+        self.optimizer3 = optim.SGD(self.params3, lr=config.learning_rate)
 
         self.pooler = Pooler(config)
 
-    def forward(self, inputs):
+    def forward(self, inputs, data_type):
         hidden_spikes = []
         outputs = self.linear1(inputs)
-        outputs, spikes = self.lif1(outputs)
+        outputs, spikes, loss = self.lif1(outputs, data_type)
         outputs = self.integrator1(outputs)
+        outputs = self.dropout1(outputs)
         hidden_spikes.append(spikes)
+        self.optimizer1.zero_grad()
+        loss.backward()
+        self.optimizer1.step()
 
         outputs = self.linear2(outputs)
-        outputs, spikes = self.lif2(outputs)
+        outputs, spikes, loss = self.lif2(outputs, data_type)
         outputs = self.integrator2(outputs)
+        outputs = self.dropout2(outputs)
         hidden_spikes.append(spikes)
+        self.optimizer2.zero_grad()
+        loss.backward()
+        self.optimizer2.step()
 
         outputs = self.linear3(outputs)
-        outputs, spikes = self.lif3(outputs)
+        outputs, spikes, loss = self.lif3(outputs, data_type)
         outputs = self.integrator3(outputs)
+        outputs = self.dropout3(outputs)
         hidden_spikes.append(spikes)
+        self.optimizer3.zero_grad()
+        loss.backward()
+        self.optimizer3.step()
 
         outputs = self.pooler(outputs)
 
@@ -154,7 +193,7 @@ class Net(nn.Module):
         self.snn = SNN(config)
         self.classifier = nn.Linear(config.max_seq_length, config.num_labels)
 
-    def forward(self, input_ids, input_mask, segment_ids):
+    def forward(self, input_ids, input_mask, segment_ids, data_type=None):
 
         with torch.no_grad():
             bert_outputs = self.bert(input_ids=input_ids, attention_mask=input_mask, token_type_ids=segment_ids, output_hidden_states=True)
@@ -164,8 +203,8 @@ class Net(nn.Module):
             # sum of last three layer
             snn_inputs = torch.stack(hidden_states[-3:]).sum(0)
 
-            snn_outputs, hidden_spikes = self.snn(snn_inputs)
+        snn_outputs, hidden_spikes = self.snn(snn_inputs, data_type='positive')
 
-            logits = self.classifier(snn_outputs)
+        logits = self.classifier(snn_outputs)
 
         return logits, hidden_spikes
